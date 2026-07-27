@@ -41,16 +41,9 @@ app.get("/api/health", (req, res) => {
 });
 
 // ================= API Routes =================
-
-// Authentication
 app.use("/api/auth", authRoutes);
-
-// Courses
 app.use("/api/courses", courseRoutes);
-
-// Admin
 app.use("/api/admin", adminRoutes);
-
 // ================= 404 Route =================
 app.use((req, res) => {
   res.status(404).json({
@@ -63,10 +56,16 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
 
-  res.status(500).json({
+  const response = {
     success: false,
     message: err.message || "Internal Server Error",
-  });
+  };
+
+  if (process.env.NODE_ENV !== "production") {
+    response.stack = err.stack;
+  }
+
+  res.status(500).json(response);
 });
 
 // ================= Server =================

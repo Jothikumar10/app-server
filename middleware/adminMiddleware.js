@@ -1,33 +1,46 @@
-const mongoose = require("mongoose");
+const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-const subscriptionSchema = new mongoose.Schema(
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
+const adminMiddleware = async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
 
-    plan: {
-      type: String,
-      enum: ["Monthly", "Yearly"],
-      required: true,
-    },
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided",
+      });
+    }
 
-    amount: {
-      type: Number,
-      required: true,
-    },
+    const token = authHeader.split(" ")[1];
 
-    status: {
-      type: String,
-      enum: ["Active", "Expired", "Cancelled"],
-      default: "Active",
-    },
-  },
-  {
-    timestamps: true,
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Admin only",
+      });
+    }
+
+    req.user = user;
+
+    next();
+  } catch (err) {
+    res.status(401).json({
+      success: false,
+      message: "Invalid Token",
+    });
   }
-);
+};
 
-module.exports = mongoose.model("Subscription", subscriptionSchema);
+module.exports = adminMiddleware;

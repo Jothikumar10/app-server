@@ -1,12 +1,11 @@
 const User = require("../models/User");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// Register
-
+// ================= Register =================
 exports.register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role } = req.body;
 
     const userExists = await User.findOne({ email });
 
@@ -17,18 +16,23 @@ exports.register = async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-
+    // Don't hash here — let the pre('save') hook in the model handle it
     const user = await User.create({
       name,
       email,
-      password: hashedPassword,
+      password,
+      role: role || "student",
     });
 
     res.status(201).json({
       success: true,
       message: "Registration Successful",
-      user,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -37,13 +41,12 @@ exports.register = async (req, res) => {
     });
   }
 };
-
-// Login
-
+// ================= Login =================
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Find User
     const user = await User.findOne({ email });
 
     if (!user) {
@@ -53,7 +56,11 @@ exports.login = async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    // Debug/log and compare using the model helper
+    // 
+    const isMatch = await user.comparePassword(password);
+
+    // console.log("Password Match:", isMatch);
 
     if (!isMatch) {
       return res.status(400).json({
@@ -62,8 +69,12 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Generate JWT Token
     const token = jwt.sign(
-      { id: user._id },
+      {
+        id: user._id,
+        role: user.role,
+      },
       process.env.JWT_SECRET,
       {
         expiresIn: "7d",
@@ -74,7 +85,12 @@ exports.login = async (req, res) => {
       success: true,
       message: "Login Successful",
       token,
-      user,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
   } catch (error) {
     res.status(500).json({
