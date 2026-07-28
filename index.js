@@ -11,7 +11,8 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const adminRoutes = require("./routes/adminRoutes");
-
+const menuRoutes = require("./routes/menuRoutes");
+const certificationRoutes = require("./routes/certificationRoutes");
 // Connect Database
 connectDB();
 
@@ -44,6 +45,8 @@ app.get("/api/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/menu", menuRoutes);
+app.use("/api/certifications", certificationRoutes);
 // ================= 404 Route =================
 app.use((req, res) => {
   res.status(404).json({

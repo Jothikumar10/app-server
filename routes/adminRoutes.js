@@ -7,12 +7,12 @@ const adminMiddleware = require("../middleware/adminMiddleware");
 router.post("/register", adminController.adminRegister);
 router.post("/login", adminController.adminLogin);
 
-router.get("/dashboard", adminMiddleware, adminController.dashboard);
+router.get("/dashboard", adminController.dashboard);
 
-router.get("/users", adminMiddleware, adminController.getUsers);
+router.get("/users", adminController.getUsers);
 
-router.delete("/users/:id", adminMiddleware, adminController.deleteUser);
+router.delete("/users/:id", adminController.deleteUser);
 
-router.get("/analytics", adminMiddleware, adminController.analytics);
+router.get("/analytics", adminController.analytics);
 
 module.exports = router;
